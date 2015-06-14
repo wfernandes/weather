@@ -1,6 +1,7 @@
 package features
 
 type ConditionsResponse struct {
+	Response  Response   `json:"response"`
 	Condition Conditions `json:"current_observation"`
 }
 
@@ -73,4 +74,3 @@ type ObservationLocation struct {
 	Longitude string `json:"longitude"`
 	Elevation string `json:"elevation"`
 }
-

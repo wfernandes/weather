@@ -89,6 +89,8 @@ var _ = Describe("Conditions", func() {
 		err := json.Unmarshal([]byte(jsonResp), &weatherResp)
 		Expect(err).ToNot(HaveOccurred())
 
+		Expect(weatherResp.Response).ToNot(BeNil())
+		Expect(weatherResp.Response.Error).To(BeNil())
 		Expect(weatherResp.Condition).ToNot(BeNil())
 		Expect(weatherResp.Condition.Weather).To(Equal("Partly Cloudy"))
 	})
