@@ -24,9 +24,9 @@ type Conditions struct {
 	WindDir               string              `json:"wind_dir"`
 	WindDegrees           float64             `json:"wind_degrees"`
 	WindMPH               float64             `json:"wind_mph"`
-	WindGustMPH           string             `json:"wind_gust_mph"`
+	WindGustMPH           string              `json:"wind_gust_mph"`
 	WindKPH               float64             `json:"wind_kph"`
-	WindGustKPH           string             `json:"wind_gust_kph"`
+	WindGustKPH           string              `json:"wind_gust_kph"`
 	PressureMB            string              `json:"pressure_mb"`
 	PressureIN            string              `json:"pressure_in"`
 	PressureTrend         string              `json:"pressure_trend"`
@@ -50,14 +50,14 @@ type Conditions struct {
 }
 
 type DisplayLocation struct {
-	City       string `json:"city"`
-	State      string `json:"state"`
+	City      string `json:"city"`
+	State     string `json:"state"`
 	StateName string `json:"state_name"`
-	Country    string `json:"country"`
-	Zip        string `json:"zip"`
-	Latitude   string `json:"latitude"`
-	Longitude  string `json:"longitude"`
-	Elevation  string `json:"elevation"`
+	Country   string `json:"country"`
+	Zip       string `json:"zip"`
+	Latitude  string `json:"latitude"`
+	Longitude string `json:"longitude"`
+	Elevation string `json:"elevation"`
 }
 
 type Image struct {
