@@ -5,30 +5,42 @@ import (
 	"net/http"
 
 	"github.com/wfernandes/weather/wunderground/validation"
+	"encoding/json"
+	"io/ioutil"
+	"log"
+	"github.com/wfernandes/weather/wunderground/features"
+	"github.com/wfernandes/weather/wunderground/config"
 )
 
-const apiHost = "http://api.wunderground.com"
-
-type HttpClient interface {
-	Do(req *http.Request) (*http.Response, error)
-}
+const api = "http://api.wunderground.com"
 
 type Wunderground struct {
 	apiKey string
-	client HttpClient
+	apiHost string
+	client *http.Client
 }
 
-func New(apiKey string, client HttpClient) *Wunderground {
+func New(cnf *config.Config) *Wunderground {
 
-	if client == nil {
-		client = http.DefaultClient
+	err := cnf.Validate()
+	if err != nil {
+		panic(err)
 	}
 
 	return &Wunderground{
-		apiKey: apiKey,
-		client: client,
+		apiKey: cnf.ApiKey,
+		apiHost: cnf.ApiHost,
+		client: http.DefaultClient,
 	}
 }
+
+func DefaultConfig(apiKey string) *config.Config {
+	return &config.Config{
+		ApiKey: apiKey,
+		ApiHost: api,
+	}
+}
+
 
 func (w *Wunderground) Conditions(zipCode string) error {
 
@@ -37,8 +49,8 @@ func (w *Wunderground) Conditions(zipCode string) error {
 		return err
 	}
 
-	path := fmt.Sprintf("/api/%s/conditions/q/%s.json", w.apiKey, zipCode)
-	url := apiHost + path
+	url := fmt.Sprintf("%s/api/%s/conditions/q/%s.json", w.ApiHost(), w.ApiKey(), zipCode)
+
 	_, err = w.makeRequest(url)
 	if err != nil {
 		return err
@@ -47,8 +59,12 @@ func (w *Wunderground) Conditions(zipCode string) error {
 	return nil
 }
 
-func (w *Wunderground) Client() HttpClient {
-	return w.client
+func (w *Wunderground) ApiKey() string {
+	return w.apiKey
+}
+
+func (w *Wunderground) ApiHost() string {
+	return w.apiHost
 }
 
 func (w *Wunderground) makeRequest(url string) (*http.Response, error) {
@@ -56,22 +72,36 @@ func (w *Wunderground) makeRequest(url string) (*http.Response, error) {
 	if err != nil {
 		return nil, err
 	}
-	return w.client.Do(req)
+	resp, err := w.client.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+
+
+	err = checkRespForError(resp)
+	if err != nil {
+		return nil, err
+	}
+
+	return resp, nil
 }
 
-//
-//println("there was no error...huh....")
-//var data map[string]interface{}
-//decoder := json.NewDecoder(resp.Body)
-//err = decoder.Decode(&data)
-//if err != nil {
-//log.Panic("Error decoding json response")
-//}
-//
-//for k, v := range data {
-//if k == "current_observation" {
-//for k2, v2 := range v.(map[string]interface{}) {
-//fmt.Printf("\n%s : %v\n", k2, v2)
-//}
-//}
-//}
+func checkRespForError(resp *http.Response) error {
+
+	bodyBytes, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		log.Panic("Error reading response body", err)
+		return err
+	}
+
+	var r *features.GenericResponse
+	err = json.Unmarshal(bodyBytes, &r)
+	if err != nil {
+		log.Print("Error unmarshalling response")
+		return err
+	}
+
+	return r.HasError()
+
+}

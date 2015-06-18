@@ -3,101 +3,90 @@ package wunderground_test
 import (
 	"github.com/wfernandes/weather/wunderground"
 
+	"fmt"
+
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
-	"net/http"
-	"time"
-	"fmt"
-	"errors"
+	"github.com/wfernandes/weather/wunderground/config"
 )
 
 var _ = Describe("Wunderground", func() {
 
 	var (
-		apiKey string
-		client *http.Client
+		apiKey      string
+		defaultConf *config.Config
 	)
 
-	BeforeEach(func(){
+	BeforeEach(func() {
 		apiKey = "some_api_key"
+		defaultConf = wunderground.DefaultConfig(apiKey)
 	})
 
-	It("requires apiKey and client for new wunderground service", func() {
-
-		apiKey := "some_api_key"
-		client = &http.Client{
-			Timeout: time.Minute,
-		}
-
-		w := wunderground.New(apiKey, client)
-		Expect(w).ToNot(BeNil())
-		Expect(w.Client()).To(Equal(client))
+	Context("Default Config", func() {
+		It("sets the api key and defaults for the HttpClient and api host", func() {
+			Expect(defaultConf.ApiKey).To(Equal(apiKey))
+			Expect(defaultConf.ApiHost).To(Equal("http://api.wunderground.com"))
+		})
 	})
 
-	It("sets a default client if one is not provided", func() {
-		w := wunderground.New(apiKey, nil)
-		Expect(w).ToNot(BeNil())
-		Expect(w.Client()).To(Equal(http.DefaultClient))
+	Context("Initialization", func() {
+		It("panics if no api key is set in the config", func() {
+			defaultConf.ApiKey = ""
+			Expect(func() { wunderground.New(defaultConf) }).To(Panic())
+		})
+
+		It("panics if no api host is set in the config", func() {
+			defaultConf.ApiHost = ""
+			Expect(func() { wunderground.New(defaultConf) }).To(Panic())
+		})
 	})
 
-	Context("Conditions", func(){
+	Context("Conditions", func() {
+
+		var (
+			fakeServer *MockWunderground
+			w          *wunderground.Wunderground
+		)
+
+		BeforeEach(func() {
+			fakeServer = NewMockWunderground()
+			defaultConf.ApiHost = fakeServer.Server.URL
+
+			w = wunderground.New(defaultConf)
+		})
+
+		AfterEach(func() {
+			fakeServer.Close()
+		})
+
 		It("builds the correct url for the wunderground api", func() {
-			fc := &fakeClient{
-				ActualReqCh: make(chan *http.Request, 1),
-			}
-			w := wunderground.New(apiKey, fc)
-
 			zipCode := "80516"
-			w.Conditions(zipCode)
+			fakeServer.FakeResponseBody = "{}"
+			err := w.Conditions("80516")
+			Expect(err).ToNot(HaveOccurred())
 
-			var actualReq *http.Request
-			Eventually(fc.ActualReqCh).Should(Receive(&actualReq))
-			Expect(actualReq.Method).To(Equal("GET"))
-			Expect(actualReq.URL.Scheme).To(Equal("http"))
-			Expect(actualReq.URL.Host).To(Equal("api.wunderground.com"))
+			Expect(fakeServer.ReceivedReq.Method).To(Equal("GET"))
 			path := fmt.Sprintf("/api/%s/conditions/q/%s.json", apiKey, zipCode)
-			Expect(actualReq.URL.Path).To(Equal(path))
+			Expect(fakeServer.ReceivedReq.URL.Path).To(Equal(path))
+
 		})
 
-		XIt("returns an error for a non existant zip code", func() {
-
-			fakeErrorResp := buildErrorResp()
-			fc := &fakeClient{}
-			w := wunderground.New(apiKey, nil)
-			err := w.Conditions("00000")
+		It("returns an error for invalid api key", func() {
+			fakeServer.FakeResponseBody = InvalidApiKeyResponse
+			err := w.Conditions("80303")
 			Expect(err).To(HaveOccurred())
+			Expect(err.Error()).To(Equal("keynotfound: this key does not exist"))
 
-			_ = fakeErrorResp
-			_ = fc
+		})
 
+		It("returns an error for bad zip code", func() {
+			fakeServer.FakeResponseBody = InvalidZipCodeResponse
+			err := w.Conditions("00000")
+
+			Expect(err).To(HaveOccurred())
+			Expect(err.Error()).To(Equal("querynotfound: No cities match your search query"))
 		})
 
 	})
 
-
-	XIt("makes a real request for weather conditions", func() {
-		w := wunderground.New("0e6bd1b46e3d9869", nil)
-
-		zipCode := "00000"
-		w.Conditions(zipCode)
-
-	})
 })
-
-type fakeClient struct {
-	ActualReqCh chan *http.Request
-	ReturnResp *http.Response
-}
-
-func (f fakeClient) Do(req *http.Request) (*http.Response, error) {
-	f.ActualReqCh <- req
-	return f.ReturnResp, errors.New("error making request")
-}
-
-func buildErrorResp() *http.Response {
-
-	jsonResp := `{"response":{"version":"0.1","termsofService":"http://www.wunderground.com/weather/api/d/terms.html","features":{},"error":{"type":"querynotfound","description":"No cities match your search query"}}}`
-
-	_ = jsonResp
-	return nil
-}
