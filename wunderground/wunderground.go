@@ -42,21 +42,27 @@ func DefaultConfig(apiKey string) *config.Config {
 }
 
 
-func (w *Wunderground) Conditions(zipCode string) error {
+func (w *Wunderground) Conditions(zipCode string) (*features.ConditionsResponse, error) {
 
 	err := validation.Zip(zipCode)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	url := fmt.Sprintf("%s/api/%s/conditions/q/%s.json", w.ApiHost(), w.ApiKey(), zipCode)
 
-	_, err = w.makeRequest(url)
+	bodyBytes, err := w.makeRequest(url)
 	if err != nil {
-		return err
+		log.Print("Error making request")
+		return nil, err
+	}
+	var cond *features.ConditionsResponse
+	err = json.Unmarshal(bodyBytes, &cond)
+	if err != nil {
+		log.Print("Error unmarshalling condition body")
 	}
 
-	return nil
+	return cond, nil
 }
 
 func (w *Wunderground) ApiKey() string {
@@ -67,41 +73,40 @@ func (w *Wunderground) ApiHost() string {
 	return w.apiHost
 }
 
-func (w *Wunderground) makeRequest(url string) (*http.Response, error) {
+func (w *Wunderground) makeRequest(url string) ([]byte, error) {
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
 		return nil, err
 	}
 	resp, err := w.client.Do(req)
-	if err != nil {
-		return nil, err
-	}
 	defer resp.Body.Close()
-
-
-	err = checkRespForError(resp)
 	if err != nil {
 		return nil, err
 	}
 
-	return resp, nil
+	bodyBytes, err := checkRespForError(resp)
+	if err != nil {
+		return nil, err
+	}
+
+	return bodyBytes, nil
 }
 
-func checkRespForError(resp *http.Response) error {
+func checkRespForError(resp *http.Response) ([]byte, error) {
 
 	bodyBytes, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
 		log.Panic("Error reading response body", err)
-		return err
+		return nil, err
 	}
 
 	var r *features.GenericResponse
 	err = json.Unmarshal(bodyBytes, &r)
 	if err != nil {
 		log.Print("Error unmarshalling response")
-		return err
+		return nil, err
 	}
 
-	return r.HasError()
+	return bodyBytes, r.HasError()
 
 }

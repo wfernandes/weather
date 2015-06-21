@@ -61,8 +61,8 @@ var _ = Describe("Wunderground", func() {
 
 		It("builds the correct url for the wunderground api", func() {
 			zipCode := "80516"
-			fakeServer.FakeResponseBody = "{}"
-			err := w.Conditions("80516")
+			fakeServer.FakeResponseBody = `{"hello":"world"}`
+			_, err := w.Conditions("80516")
 			Expect(err).ToNot(HaveOccurred())
 
 			Expect(fakeServer.ReceivedReq.Method).To(Equal("GET"))
@@ -73,7 +73,7 @@ var _ = Describe("Wunderground", func() {
 
 		It("returns an error for invalid api key", func() {
 			fakeServer.FakeResponseBody = InvalidApiKeyResponse
-			err := w.Conditions("80303")
+			_, err := w.Conditions("80303")
 			Expect(err).To(HaveOccurred())
 			Expect(err.Error()).To(Equal("keynotfound: this key does not exist"))
 
@@ -81,10 +81,18 @@ var _ = Describe("Wunderground", func() {
 
 		It("returns an error for bad zip code", func() {
 			fakeServer.FakeResponseBody = InvalidZipCodeResponse
-			err := w.Conditions("00000")
+			_, err := w.Conditions("00000")
 
 			Expect(err).To(HaveOccurred())
 			Expect(err.Error()).To(Equal("querynotfound: No cities match your search query"))
+		})
+
+		It("returns conditions for successful request", func() {
+		  	fakeServer.FakeResponseBody = ValidResponse
+			cond, err := w.Conditions("80516")
+
+			Expect(err).ToNot(HaveOccurred())
+			Expect(cond).ToNot(BeNil())
 		})
 
 	})
