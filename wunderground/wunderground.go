@@ -56,8 +56,8 @@ func (w *Wunderground) Conditions(zipCode string) (*features.ConditionsResponse,
 		log.Panic("Error making request", err)
 	}
 
-	var cond *features.ConditionsResponse
-	err = json.NewDecoder(resp.Body).Decode(&cond)
+	cond := &features.ConditionsResponse{}
+	err = json.NewDecoder(resp.Body).Decode(cond)
 	if err != nil {
 		log.Panic("Error unmarshalling condition body ", err)
 	}
