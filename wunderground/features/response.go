@@ -13,14 +13,10 @@ type ErrResponse struct {
 	Description string `json:"description"`
 }
 
-type GenericResponse struct {
-	Response *Response `json:"response"`
-}
-
-func (r *GenericResponse) HasError() error {
-	if r.Response == nil || r.Response.Error == nil {
+func (r *Response) HasError() error {
+	if r.Error == nil {
 		return nil
 	}
 
-	return fmt.Errorf("%s: %s", r.Response.Error.Type, r.Response.Error.Description)
+	return fmt.Errorf("%s: %s", r.Error.Type, r.Error.Description)
 }

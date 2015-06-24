@@ -61,7 +61,7 @@ var _ = Describe("Wunderground", func() {
 
 		It("builds the correct url for the wunderground api", func() {
 			zipCode := "80516"
-			fakeServer.FakeResponseBody = `{"hello":"world"}`
+			fakeServer.FakeResponseBody = `{"response":{}}`
 			_, err := w.Conditions("80516")
 			Expect(err).ToNot(HaveOccurred())
 
@@ -88,7 +88,7 @@ var _ = Describe("Wunderground", func() {
 		})
 
 		It("returns conditions for successful request", func() {
-		  	fakeServer.FakeResponseBody = ValidResponse
+			fakeServer.FakeResponseBody = ValidResponse
 			cond, err := w.Conditions("80516")
 
 			Expect(err).ToNot(HaveOccurred())

@@ -1,8 +1,8 @@
 package features
 
 type ConditionsResponse struct {
-	Response  Response   `json:"response"`
-	Condition Conditions `json:"current_observation"`
+	Response  *Response   `json:"response"`
+	Condition *Conditions `json:"current_observation,omitempty"`
 }
 
 type Conditions struct {
