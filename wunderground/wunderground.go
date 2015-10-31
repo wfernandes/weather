@@ -70,6 +70,34 @@ func (w *Wunderground) Conditions(zipCode string) (*features.ConditionsResponse,
 	return cond, nil
 }
 
+func (w *Wunderground) Hourly(zipCode string) (*features.HourlyResponse, error){
+	err := validation.Zip(zipCode)
+	if err != nil {
+		return nil, err
+	}
+
+	url := fmt.Sprintf("%s/api/%s/hourly/q/%s.json", w.ApiHost(), w.ApiKey(), zipCode)
+
+	resp, err := w.makeRequest(url)
+	defer resp.Body.Close()
+	if err != nil {
+		log.Panic("Error making request", err)
+	}
+
+	hourlyResp := &features.HourlyResponse{}
+	err = json.NewDecoder(resp.Body).Decode(hourlyResp)
+	if err != nil {
+		log.Panic("Error unmarshalling condition body ", err)
+	}
+
+	err = hourlyResp.Response.HasError()
+	if err != nil {
+		return nil, err
+	}
+
+	return hourlyResp, nil
+}
+
 func (w *Wunderground) ApiKey() string {
 	return w.apiKey
 }

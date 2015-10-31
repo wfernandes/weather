@@ -13,8 +13,8 @@ import (
 var _ = Describe("Wunderground", func() {
 
 	var (
-		apiKey      string
-		conf *config.Config
+		apiKey string
+		conf   *config.Config
 	)
 
 	BeforeEach(func() {
