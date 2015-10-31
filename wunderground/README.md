@@ -8,4 +8,4 @@ This is not complete in any way.
 
 ## Tests
 
-Tests can be executed by either running `ginkgo -r` 
+Tests can be executed by running `ginkgo -r` 
