@@ -70,7 +70,7 @@ func (w *Wunderground) Conditions(zipCode string) (*features.ConditionsResponse,
 	return cond, nil
 }
 
-func (w *Wunderground) Hourly(zipCode string) (*features.HourlyResponse, error){
+func (w *Wunderground) Hourly(zipCode string) (*features.HourlyResponse, error) {
 	err := validation.Zip(zipCode)
 	if err != nil {
 		return nil, err

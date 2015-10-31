@@ -2,11 +2,11 @@ package features
 
 type HourlyResponse struct {
 	Response *Response `json:"response"`
-	Hourly   []Hourly `json:"hourly_forecast"`
+	Hourly   []Hourly  `json:"hourly_forecast"`
 }
 
 type Hourly struct {
-	FCTTime       FCTTime  `json:"FCTTIME"`
+	FCTTime       FCTTime   `json:"FCTTIME"`
 	Condition     string    `json:"condition"`
 	Icon          string    `json:"icon"`
 	IconUrl       string    `json:"icon_url"`

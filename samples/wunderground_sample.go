@@ -1,12 +1,13 @@
 package main
+
 import (
-	"github.com/wfernandes/weather/wunderground"
 	"fmt"
+	"github.com/wfernandes/weather/wunderground"
 )
 
 const (
 	apiKey = "API_KEY"
-	zip = "ZIP_CODE"
+	zip    = "ZIP_CODE"
 )
 
 func main() {
