@@ -14,30 +14,30 @@ var _ = Describe("Wunderground", func() {
 
 	var (
 		apiKey      string
-		defaultConf *config.Config
+		conf *config.Config
 	)
 
 	BeforeEach(func() {
 		apiKey = "some_api_key"
-		defaultConf = wunderground.DefaultConfig(apiKey)
+		conf = wunderground.DefaultConfig(apiKey)
 	})
 
 	Context("Default Config", func() {
 		It("sets the api key and defaults for the HttpClient and api host", func() {
-			Expect(defaultConf.ApiKey).To(Equal(apiKey))
-			Expect(defaultConf.ApiHost).To(Equal("http://api.wunderground.com"))
+			Expect(conf.ApiKey).To(Equal(apiKey))
+			Expect(conf.ApiHost).To(Equal("http://api.wunderground.com"))
 		})
 	})
 
 	Context("Initialization", func() {
 		It("panics if no api key is set in the config", func() {
-			defaultConf.ApiKey = ""
-			Expect(func() { wunderground.New(defaultConf) }).To(Panic())
+			conf.ApiKey = ""
+			Expect(func() { wunderground.New(conf) }).To(Panic())
 		})
 
 		It("panics if no api host is set in the config", func() {
-			defaultConf.ApiHost = ""
-			Expect(func() { wunderground.New(defaultConf) }).To(Panic())
+			conf.ApiHost = ""
+			Expect(func() { wunderground.New(conf) }).To(Panic())
 		})
 	})
 
@@ -50,9 +50,9 @@ var _ = Describe("Wunderground", func() {
 
 		BeforeEach(func() {
 			fakeServer = NewMockWunderground()
-			defaultConf.ApiHost = fakeServer.Server.URL
+			conf.ApiHost = fakeServer.Server.URL
 
-			w = wunderground.New(defaultConf)
+			w = wunderground.New(conf)
 		})
 
 		AfterEach(func() {
@@ -76,7 +76,6 @@ var _ = Describe("Wunderground", func() {
 			_, err := w.Conditions("80303")
 			Expect(err).To(HaveOccurred())
 			Expect(err.Error()).To(Equal("keynotfound: this key does not exist"))
-
 		})
 
 		It("returns an error for bad zip code", func() {
